@@ -1,0 +1,15 @@
+2024-03-05 08:45:00 UTC [5432] appuser@production LOG:  statement: SELECT * FROM customers WHERE id = 42;
+2024-03-05 09:00:00 UTC [5432] appuser@production LOG:  statement: SELECT * FROM users;
+2024-03-05 09:00:05 UTC [5432] appuser@production LOG:  statement: SELECT * FROM credentials;
+2024-03-05 09:00:10 UTC [5432] attacker@production LOG:  statement: SELECT * FROM accounts WHERE 1=1 UNION SELECT username, password FROM users;
+2024-03-05 09:15:00 UTC [5433] admin@production LOG:  statement: GRANT ALL PRIVILEGES ON *.* TO 'backdoor'@'%';
+2024-03-05 09:30:00 UTC [5433] admin@production LOG:  statement: CREATE USER 'exfil_user' IDENTIFIED BY 'password123';
+2024-03-05 09:45:00 UTC [5432] attacker@production LOG:  statement: SELECT * FROM customers INTO OUTFILE '/tmp/customer_dump.csv';
+2024-03-05 10:00:00 UTC [5434] dba@production LOG:  statement: DROP TABLE audit_logs;
+2024-03-05 10:15:00 UTC [5434] dba@production LOG:  statement: TRUNCATE TABLE security_events;
+2024-03-05 10:30:00 UTC [5432] attacker@production LOG:  statement: SELECT table_name FROM information_schema.tables WHERE table_schema = 'production';
+2024-03-05 11:00:00 UTC [5432] appuser@production LOG:  statement: UPDATE users SET role = 'admin' WHERE username = 'attacker';
+2024-03-05 11:30:00 UTC [5432] appuser@production LOG:  statement: DELETE FROM audit_trail;
+2024-03-05 12:00:00 UTC [5432] appuser@production LOG:  statement: INSERT INTO users (username, password, role) VALUES ('backdoor_admin', 'hash123', 'superadmin');
+2024-03-05 12:30:00 UTC [5432] appuser@production LOG:  statement: SELECT 1; -- normal heartbeat query
+2024-03-05 13:00:00 UTC [5432] appuser@production LOG:  statement: SELECT count(*) FROM orders WHERE created_at > '2024-03-04';

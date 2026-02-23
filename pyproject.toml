@@ -1,0 +1,124 @@
+[project]
+name = "threattriage"
+version = "1.0.0"
+description = "Automated SOC Alert & Log Analysis Engine — Ingest, parse, and analyze enterprise logs with integrated Threat Intelligence and MITRE ATT&CK mapping."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "ThreatTriage Team"},
+]
+keywords = ["soc", "siem", "threat-intelligence", "mitre-attack", "log-analysis", "incident-response"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # --- Web Framework ---
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.18",
+
+    # --- Database ---
+    "sqlmodel>=0.0.22",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "aiosqlite>=0.20.0",
+
+    # --- Task Queue ---
+    "celery[redis]>=5.4.0",
+    "redis>=5.2.0",
+
+    # --- Threat Intelligence ---
+    "vt-py>=0.18.0",
+    "OTXv2>=1.5.12",
+    "httpx>=0.28.0",
+
+    # --- MITRE ATT&CK ---
+    "mitreattack-python>=4.0.0",
+
+    # --- Log Parsing & Analysis ---
+    "python-dateutil>=2.9.0",
+    "ipaddress>=1.0.23",
+    "geoip2>=4.8.1",
+
+    # --- Report Generation ---
+    "jinja2>=3.1.4",
+
+    # --- Configuration & Logging ---
+    "pydantic-settings>=2.7.0",
+    "structlog>=24.4.0",
+
+    # --- Utilities ---
+    "orjson>=3.10.0",
+    "pyyaml>=6.0.2",
+    "rich>=13.9.0",
+    "typer>=0.15.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pre-commit>=4.0.0",
+    "factory-boy>=3.3.1",
+    "faker>=33.0.0",
+    "respx>=0.22.0",
+]
+pdf = [
+    "weasyprint>=63.0",
+]
+
+[project.scripts]
+threattriage = "threattriage.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/threattriage"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "T20", "ICN", "PIE", "PT", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "ERA", "PGH", "PL", "PERF", "RUF"]
+ignore = ["S101", "PLR0913", "PLR2004"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["threattriage"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra -q --strict-markers"
+markers = [
+    "integration: marks tests as integration tests",
+    "slow: marks tests as slow",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[tool.coverage.run]
+source = ["src/threattriage"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80

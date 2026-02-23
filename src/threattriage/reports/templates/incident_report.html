@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Report — {{ report.executive_summary.incident_title }}</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-2: #242736;
+            --border: #2d3148;
+            --text: #e4e6f0;
+            --text-dim: #8b8fa3;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #eab308;
+            --low: #3b82f6;
+            --info: #6b7280;
+            --success: #22c55e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .report-header {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .report-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-dim);
+            font-size: 0.875rem;
+        }
+
+        /* Severity Badge */
+        .severity-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .severity-critical { background: rgba(239,68,68,0.15); color: var(--critical); border: 1px solid rgba(239,68,68,0.3); }
+        .severity-high { background: rgba(249,115,22,0.15); color: var(--high); border: 1px solid rgba(249,115,22,0.3); }
+        .severity-medium { background: rgba(234,179,8,0.15); color: var(--medium); border: 1px solid rgba(234,179,8,0.3); }
+        .severity-low { background: rgba(59,130,246,0.15); color: var(--low); border: 1px solid rgba(59,130,246,0.3); }
+        .severity-info { background: rgba(107,114,128,0.15); color: var(--info); border: 1px solid rgba(107,114,128,0.3); }
+
+        /* Sections */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: var(--surface-2);
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.25rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: var(--surface-2);
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        tr:hover td { background: rgba(99, 102, 241, 0.05); }
+
+        /* Timeline */
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-item:last-child { border-bottom: none; }
+
+        .timeline-time {
+            min-width: 160px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .timeline-event { flex: 1; }
+
+        /* IOC List */
+        .ioc-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .ioc-type {
+            background: var(--accent-glow);
+            color: var(--accent);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Recommendation */
+        .recommendation {
+            background: var(--surface-2);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .recommendation .title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .recommendation .detail {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        /* Footer */
+        .report-footer {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Links */
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+
+        @media print {
+            body { background: white; color: #1a1a1a; padding: 0; }
+            .section { border: 1px solid #ddd; page-break-inside: avoid; }
+            .stat-card { background: #f5f5f5; }
+            .report-header { background: #f0f0f0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="report-header">
+            <h1>🛡️ {{ report.executive_summary.incident_title }}</h1>
+            <div class="report-meta">
+                <div class="meta-item">
+                    <span class="severity-badge severity-{{ report.executive_summary.severity }}">
+                        {{ report.executive_summary.severity }}
+                    </span>
+                </div>
+                <div class="meta-item">📅 {{ report.report_metadata.generated_at[:19] }}</div>
+                <div class="meta-item">🔔 {{ report.executive_summary.total_alerts }} alerts</div>
+                <div class="meta-item">🎯 {{ report.executive_summary.total_iocs }} IOCs</div>
+                <div class="meta-item">⚡ {{ report.report_metadata.generator }}</div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="section">
+            <h2>📋 Executive Summary</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="value">{{ report.executive_summary.total_alerts }}</div>
+                    <div class="label">Alerts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">{{ report.executive_summary.total_iocs }}</div>
+                    <div class="label">IOCs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">{{ report.executive_summary.source_ips | length }}</div>
+                    <div class="label">Source IPs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">{{ report.mitre_attack.techniques | length }}</div>
+                    <div class="label">ATT&CK Techniques</div>
+                </div>
+            </div>
+            <div style="margin-top: 1.25rem; white-space: pre-line; font-size: 0.9rem;">{{ report.executive_summary.summary }}</div>
+        </div>
+
+        <!-- MITRE ATT&CK Mapping -->
+        <div class="section">
+            <h2>🎯 MITRE ATT&CK Mapping</h2>
+            <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1rem;">
+                Tactics: {{ report.mitre_attack.tactics | join(' → ') }}
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Technique ID</th>
+                        <th>Name</th>
+                        <th>Tactic</th>
+                        <th>Detections</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tech in report.mitre_attack.techniques %}
+                    <tr>
+                        <td><a href="{{ tech.url }}" target="_blank">{{ tech.id }}</a></td>
+                        <td>{{ tech.name }}</td>
+                        <td>{{ tech.tactic }}</td>
+                        <td>{{ tech.detection_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Alerts -->
+        <div class="section">
+            <h2>🚨 Alert Details</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Rule</th>
+                        <th>Source IP</th>
+                        <th>Timestamp</th>
+                        <th>Techniques</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in report.alerts %}
+                    <tr>
+                        <td><span class="severity-badge severity-{{ alert.severity }}">{{ alert.severity }}</span></td>
+                        <td>
+                            <strong>{{ alert.rule_name }}</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-dim);">{{ alert.description[:100] }}</div>
+                        </td>
+                        <td style="font-family: monospace;">{{ alert.source_ip or '—' }}</td>
+                        <td style="font-size: 0.8rem;">{{ alert.timestamp[:19] if alert.timestamp else '—' }}</td>
+                        <td style="font-size: 0.8rem;">{{ alert.mitre_techniques | join(', ') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if report.anomalies %}
+        <!-- Anomalies -->
+        <div class="section">
+            <h2>📊 Anomalies Detected</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Score</th>
+                        <th>Source IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for anom in report.anomalies %}
+                    <tr>
+                        <td><span class="severity-badge severity-{{ anom.severity }}">{{ anom.severity }}</span></td>
+                        <td>{{ anom.type }}</td>
+                        <td style="font-size: 0.85rem;">{{ anom.description }}</td>
+                        <td>{{ anom.score }}</td>
+                        <td style="font-family: monospace;">{{ anom.source_ip or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- IOCs -->
+        {% if report.indicators_of_compromise %}
+        <div class="section">
+            <h2>🔍 Indicators of Compromise (IOCs)</h2>
+            <p style="color: var(--text-dim); font-size: 0.85rem; margin-bottom: 1rem;">
+                The following IOCs were extracted from the analyzed logs. Add these to your block lists.
+            </p>
+            {% for ioc in report.indicators_of_compromise %}
+            <div class="ioc-item">
+                <span class="ioc-type">{{ ioc.type }}</span>
+                <span>{{ ioc.value }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Timeline -->
+        {% if report.timeline %}
+        <div class="section">
+            <h2>⏱️ Event Timeline</h2>
+            {% for event in report.timeline %}
+            <div class="timeline-item">
+                <div class="timeline-time">{{ event.timestamp[:19] if event.timestamp != 'unknown' else '—' }}</div>
+                <div class="timeline-event">
+                    <span class="severity-badge severity-{{ event.severity }}">{{ event.severity }}</span>
+                    <strong style="margin-left: 0.5rem;">{{ event.event }}</strong>
+                    {% if event.source_ip %}
+                    <span style="color: var(--text-dim); font-size: 0.8rem; margin-left: 0.5rem;">
+                        from {{ event.source_ip }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Recommendations -->
+        {% if report.recommendations %}
+        <div class="section">
+            <h2>✅ Remediation Recommendations</h2>
+            {% for rec in report.recommendations %}
+            <div class="recommendation">
+                <div class="title">{{ rec.mitigation }}</div>
+                <div class="detail">
+                    Addresses techniques: {{ rec.addresses_techniques | join(', ') }}
+                    | Priority: <strong>{{ rec.priority }}</strong>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="report-footer">
+            <p>Generated by <strong>ThreatTriage</strong> — Automated SOC Alert & Log Analysis Engine</p>
+            <p>Report ID: {{ report.report_metadata.report_id }} | {{ report.report_metadata.generated_at }}</p>
+        </div>
+    </div>
+</body>
+</html>

