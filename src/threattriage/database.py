@@ -12,12 +12,22 @@ from threattriage.config import get_settings
 settings = get_settings()
 
 # ─── Engine ───────────────────────────────────────────────────────────────────
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    future=True,
-    pool_pre_ping=True,
-)
+# SQLite doesn't support pool_pre_ping or pool args; handle both cases.
+_is_sqlite = settings.database_url.startswith("sqlite")
+
+_engine_kwargs: dict = {
+    "echo": settings.debug and False,  # set True for SQL debugging
+    "future": True,
+}
+
+if not _is_sqlite:
+    _engine_kwargs["pool_pre_ping"] = True
+
+if _is_sqlite:
+    # SQLite needs check_same_thread=False for async usage
+    _engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_async_engine(settings.database_url, **_engine_kwargs)
 
 # ─── Session Factory ─────────────────────────────────────────────────────────
 async_session_factory = async_sessionmaker(
@@ -42,5 +52,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 # ─── Init ─────────────────────────────────────────────────────────────────────
 async def init_db() -> None:
     """Create all tables (dev/testing only — use Alembic in production)."""
+    # Import all models so SQLModel knows about them
+    from threattriage.models import alert, incident, log_entry, ioc  # noqa: F401
+
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)

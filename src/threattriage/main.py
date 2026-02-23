@@ -30,6 +30,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         ti_providers=settings.ti_providers_available,
     )
 
+    # Initialize database tables
+    from threattriage.database import init_db
+    await init_db()
+    logger.info("database_initialized")
+
     yield
 
     logger.info("threattriage_shutting_down")
@@ -65,9 +70,11 @@ def create_app() -> FastAPI:
     # Register routers
     from threattriage.api.v1.routes import router as main_router
     from threattriage.api.v1.intel import router as intel_router
+    from threattriage.api.v1.ws import router as ws_router
 
     app.include_router(main_router)
     app.include_router(intel_router)
+    app.include_router(ws_router)
 
     # Health check
     @app.get("/health", tags=["system"])

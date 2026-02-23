@@ -35,7 +35,7 @@ export async function fetchLogs(limit = 50, offset = 0, suspiciousOnly = false) 
   return res.json();
 }
 
-export async function fetchAlerts(severity = null, status = null, limit = 50) {
+export async function getAlerts(severity = null, status = null, limit = 50) {
   const params = new URLSearchParams({ limit });
   if (severity) params.set('severity', severity);
   if (status) params.set('status', status);
@@ -43,25 +43,47 @@ export async function fetchAlerts(severity = null, status = null, limit = 50) {
   return res.json();
 }
 
-export async function fetchIncidents() {
+// Alias for backward compatibility
+export const fetchAlerts = getAlerts;
+
+export async function updateAlertStatus(alertId, newStatus) {
+  const res = await fetch(`${API_BASE}/api/v1/alerts/${alertId}/status`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ status: newStatus }),
+  });
+  return res.json();
+}
+
+export async function getIncidents() {
   const res = await fetch(`${API_BASE}/api/v1/incidents`, { headers });
   return res.json();
 }
 
-export async function fetchIncidentReport(idx) {
+// Alias
+export const fetchIncidents = getIncidents;
+
+export async function getIncidentReport(idx) {
   const res = await fetch(`${API_BASE}/api/v1/incidents/${idx}/report`, { headers });
   return res.json();
 }
 
-export async function fetchDashboardMetrics() {
+export const fetchIncidentReport = getIncidentReport;
+
+export async function getDashboardMetrics() {
   const res = await fetch(`${API_BASE}/api/v1/dashboard/metrics`, { headers });
   return res.json();
 }
 
-export async function fetchMitreHeatmap() {
+// Alias
+export const fetchDashboardMetrics = getDashboardMetrics;
+
+export async function getMitreHeatmap() {
   const res = await fetch(`${API_BASE}/api/v1/dashboard/mitre`, { headers });
   return res.json();
 }
+
+export const fetchMitreHeatmap = getMitreHeatmap;
 
 export async function lookupIOC(iocType, value) {
   const res = await fetch(`${API_BASE}/api/v1/intel/lookup`, {
