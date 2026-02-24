@@ -1392,6 +1392,121 @@ body::after {
   font-size: 0.75em !important;
 }
 
+/* ─── Cyber Card ─────────────────────────────────────────────────────────── */
+
+.cyber-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--cyber-green);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  position: relative;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cyber-green), transparent 70%);
+  opacity: 0.25;
+}
+.cyber-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 20px var(--cyber-green-glow), var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+/* ─── Cyber Button ───────────────────────────────────────────────────────── */
+
+.cyber-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(0, 255, 65, 0.25);
+  background: rgba(0, 255, 65, 0.08);
+  color: var(--cyber-green);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cyber-btn:hover:not(:disabled) {
+  background: rgba(0, 255, 65, 0.16);
+  border-color: rgba(0, 255, 65, 0.4);
+  box-shadow: 0 0 18px var(--cyber-green-glow), inset 0 0 12px var(--cyber-green-glow);
+  text-shadow: 0 0 8px var(--cyber-green-glow);
+}
+.cyber-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.cyber-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Cyber Table ────────────────────────────────────────────────────────── */
+
+.cyber-table-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  position: relative;
+}
+.cyber-table-wrapper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyber-green), transparent);
+  opacity: 0.2;
+}
+
+.cyber-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.82rem;
+}
+.cyber-table thead th {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--cyber-green);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 255, 65, 0.03);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-family: 'JetBrains Mono', monospace;
+}
+.cyber-table tbody tr {
+  transition: background 0.15s;
+}
+.cyber-table tbody tr:hover {
+  background: rgba(0, 255, 65, 0.03);
+}
+.cyber-table td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid rgba(15, 26, 46, 0.6);
+  vertical-align: middle;
+  color: var(--text-primary);
+}
+
 /* ─── Empty state ────────────────────────────────────────────────────────── */
 
 .empty-state {
