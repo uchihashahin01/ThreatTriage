@@ -1,0 +1,27 @@
+title: Privilege Escalation Attempt
+id: privesc-01
+status: stable
+level: critical
+description: Detects commands and activities associated with privilege escalation
+tags:
+  - attack.privilege_escalation
+  - attack.t1068
+  - attack.t1548
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    - 'sudo su'
+    - 'chmod u+s'
+    - 'chmod 4755'
+    - 'setuid'
+    - '/etc/sudoers'
+    - 'NOPASSWD'
+    - 'pkexec'
+    - 'doas'
+    - 'GTFOBins'
+    - 'LinPEAS'
+    - 'linpeas'
+    - 'pspy'
+  condition: selection

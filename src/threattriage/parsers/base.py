@@ -121,9 +121,17 @@ def create_registry() -> ParserRegistry:
     from threattriage.parsers.db_audit import DbAuditParser
     from threattriage.parsers.http_access import HttpAccessParser
     from threattriage.parsers.syslog import SyslogParser
+    from threattriage.parsers.windows_event import WindowsEventParser
+    from threattriage.parsers.json_structured import JsonStructuredParser
+    from threattriage.parsers.firewall import FirewallParser
+    from threattriage.parsers.ids import IDSAlertParser
 
     registry = ParserRegistry()
     registry.register(SyslogParser())
     registry.register(HttpAccessParser())
     registry.register(DbAuditParser())
+    registry.register(WindowsEventParser())
+    registry.register(JsonStructuredParser())
+    registry.register(FirewallParser())
+    registry.register(IDSAlertParser())
     return registry
