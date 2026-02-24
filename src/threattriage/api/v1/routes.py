@@ -212,6 +212,15 @@ async def ingest_logs(
 
         await session.commit()
 
+    # ── Run SOAR playbooks against new alerts ─────────────────────────────
+    try:
+        from threattriage.soar.playbooks import PlaybookEngine
+        soar_engine = PlaybookEngine()
+        for alert_dict in alert_dicts_for_ws:
+            soar_engine.evaluate_alert(alert_dict)
+    except Exception:
+        pass  # SOAR failures must not block ingestion
+
     # ── Broadcast via WebSocket ───────────────────────────────────────────
     for alert_dict in alert_dicts_for_ws:
         await manager.broadcast_alert(alert_dict)
@@ -559,6 +568,8 @@ async def update_alert_status(
     _api_key: str = Depends(verify_api_key),
 ) -> dict[str, Any]:
     """Update alert status (new → investigating → resolved)."""
+    from uuid import UUID as _UUID
+
     new_status = body.get("status", "")
     try:
         status = AlertStatus(new_status)
@@ -566,7 +577,13 @@ async def update_alert_status(
         return {"error": f"Invalid status: {new_status}"}
 
     async with async_session_factory() as session:
-        stmt = select(Alert).where(Alert.id == alert_id)
+        # Convert string to UUID for SQLite compatibility
+        try:
+            uid = _UUID(alert_id)
+        except ValueError:
+            return {"error": "Invalid alert ID format"}
+
+        stmt = select(Alert).where(Alert.id == uid)
         result = await session.execute(stmt)
         alert = result.scalar_one_or_none()
 

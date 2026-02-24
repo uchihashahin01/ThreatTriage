@@ -4,6 +4,7 @@
 # Runs both the FastAPI backend and Vite frontend in one terminal.
 # Usage:  ./start.sh          (start both servers)
 #         ./start.sh --stop   (kill both servers)
+#         ./start.sh --setup  (first-time setup: venv + deps + frontend)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -e
@@ -37,9 +38,48 @@ stop_servers() {
     exit 0
 }
 
-# Handle --stop flag
+# ── Setup function ────────────────────────────────────────────────────────────
+setup_project() {
+    echo -e "${CYAN}${BOLD}🔧 Setting up ThreatTriage...${NC}"
+    echo ""
+
+    # Python venv
+    if [ ! -d "$ROOT_DIR/.venv" ]; then
+        echo -e "  ${CYAN}▶${NC} Creating Python virtual environment..."
+        python3 -m venv "$ROOT_DIR/.venv"
+        echo -e "  ${GREEN}✓${NC} venv created"
+    else
+        echo -e "  ${GREEN}✓${NC} venv already exists"
+    fi
+
+    source "$ROOT_DIR/.venv/bin/activate"
+
+    # Backend deps
+    echo -e "  ${CYAN}▶${NC} Installing backend dependencies..."
+    pip install -e "$ROOT_DIR" --quiet
+    echo -e "  ${GREEN}✓${NC} Backend dependencies installed"
+
+    # Frontend deps
+    if [ ! -d "$ROOT_DIR/frontend/node_modules" ]; then
+        echo -e "  ${CYAN}▶${NC} Installing frontend dependencies..."
+        cd "$ROOT_DIR/frontend" && npm install --silent
+        echo -e "  ${GREEN}✓${NC} Frontend dependencies installed"
+    else
+        echo -e "  ${GREEN}✓${NC} Frontend node_modules already exists"
+    fi
+
+    echo ""
+    echo -e "${GREEN}${BOLD}  ✅ Setup complete! Run ${NC}${BOLD}./start.sh${NC}${GREEN}${BOLD} to start the app.${NC}"
+    exit 0
+}
+
+# Handle flags
 if [ "$1" = "--stop" ] || [ "$1" = "stop" ]; then
     stop_servers
+fi
+
+if [ "$1" = "--setup" ] || [ "$1" = "setup" ]; then
+    setup_project
 fi
 
 # ── Trap Ctrl+C to clean shutdown ─────────────────────────────────────────────
@@ -67,7 +107,13 @@ if [ -f "$ROOT_DIR/.venv/bin/activate" ]; then
     source "$ROOT_DIR/.venv/bin/activate"
     echo -e "  ${GREEN}✓${NC} Python venv activated"
 else
-    echo -e "  ${RED}✗${NC} No .venv found — run: python -m venv .venv && pip install -e ."
+    echo -e "  ${RED}✗${NC} No .venv found — run: ${BOLD}./start.sh --setup${NC}"
+    exit 1
+fi
+
+# ── Check frontend dependencies ──────────────────────────────────────────────
+if [ ! -d "$ROOT_DIR/frontend/node_modules" ]; then
+    echo -e "  ${RED}✗${NC} Frontend dependencies missing — run: ${BOLD}./start.sh --setup${NC}"
     exit 1
 fi
 
@@ -103,8 +149,13 @@ FRONTEND_PID=$!
 echo "$FRONTEND_PID" > "$PID_DIR/frontend.pid"
 
 # Wait for frontend to be ready
-sleep 3
-FRONTEND_PORT=$(grep -oP 'localhost:\K[0-9]+' "$ROOT_DIR/.pids/frontend.log" | head -1)
+for i in {1..8}; do
+    FRONTEND_PORT=$(grep -oP 'localhost:\K[0-9]+' "$ROOT_DIR/.pids/frontend.log" 2>/dev/null | head -1)
+    if [ -n "$FRONTEND_PORT" ]; then
+        break
+    fi
+    sleep 1
+done
 FRONTEND_PORT=${FRONTEND_PORT:-5173}
 
 echo -e "  ${GREEN}✓${NC} Frontend running on ${BOLD}http://localhost:${FRONTEND_PORT}${NC}  (PID: $FRONTEND_PID)"

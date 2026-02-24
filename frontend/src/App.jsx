@@ -7,6 +7,8 @@ import Incidents from './pages/Incidents';
 import LogIngestion from './pages/LogIngestion';
 import MitreView from './pages/MitreView';
 import ThreatIntel from './pages/ThreatIntel';
+import SOARDashboard from './pages/SOARDashboard';
+import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import { getStoredUser, logout } from './api';
 import './index.css';
@@ -45,6 +47,8 @@ export default function App() {
             <Route path="/logs" element={<LogIngestion />} />
             <Route path="/mitre" element={<MitreView />} />
             <Route path="/intel" element={<ThreatIntel />} />
+            <Route path="/soar" element={<SOARDashboard />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

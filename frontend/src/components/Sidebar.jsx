@@ -10,6 +10,8 @@ import {
     LogOut,
     Terminal,
     Activity,
+    Zap,
+    Settings,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { fetchDashboardMetrics } from '../api';
@@ -31,6 +33,8 @@ export default function Sidebar({ user, onLogout }) {
         { path: '/logs', icon: Terminal, label: 'Log Ingestion' },
         { path: '/mitre', icon: Target, label: 'MITRE ATT&CK' },
         { path: '/intel', icon: Search, label: 'Threat Intel' },
+        { path: '/soar', icon: Zap, label: 'SOAR Playbooks' },
+        { path: '/admin', icon: Settings, label: 'Admin Panel' },
     ];
 
     const initials = user?.username
@@ -65,7 +69,19 @@ export default function Sidebar({ user, onLogout }) {
                 ))}
 
                 <div className="nav-section-label">// Intelligence</div>
-                {navItems.slice(4).map(item => (
+                {navItems.slice(4, 6).map(item => (
+                    <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <item.icon className="nav-icon" size={16} />
+                        <span>{item.label}</span>
+                    </NavLink>
+                ))}
+
+                <div className="nav-section-label">// Automation</div>
+                {navItems.slice(6).map(item => (
                     <NavLink
                         key={item.path}
                         to={item.path}

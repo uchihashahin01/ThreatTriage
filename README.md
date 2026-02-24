@@ -2,199 +2,272 @@
 
 **Automated SOC Alert & Log Analysis Engine**
 
-A production-grade Python utility that ingests, parses, and analyzes enterprise log formats (syslog, HTTP access logs, database audit logs), enriches Indicators of Compromise via Threat Intelligence APIs (VirusTotal, AlienVault OTX, AbuseIPDB), and generates structured incident response reports mapped to the MITRE ATT&CK framework.
+A full-stack cybersecurity platform that ingests raw logs (syslog, HTTP, database), detects threats using 15+ rules and ML anomaly detection, enriches IOCs via threat intelligence APIs, auto-triggers SOAR playbooks, correlates alerts into incidents, and maps everything to MITRE ATT&CK — with a real-time hacker-themed React dashboard.
 
 ---
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
-![MITRE ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-v14-red?logo=data:image/svg+xml;base64,...)
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE_ATT%26CK-v14-red)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+---
+
+## 🚀 Quick Start (3 Commands)
+
+> **You need:** Python 3.11+ and Node.js 18+ installed on your machine.
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/uchihashahin01/ThreatTriage.git
+cd ThreatTriage
+
+# 2. One-time setup (creates venv, installs Python + Node deps)
+./start.sh --setup
+
+# 3. Start everything (backend + frontend in one command)
+./start.sh
+```
+
+That's it. Open **http://localhost:5173** in your browser to see the dashboard.
+
+| What you'll see | URL |
+|---|---|
+| **SOC Dashboard** | http://localhost:5173 |
+| **API Docs (Swagger)** | http://localhost:8000/docs |
+| **Health Check** | http://localhost:8000/health |
+| **WebSocket Feed** | ws://localhost:8000/ws/alerts |
+
+To stop both servers: press **Ctrl+C** or run `./start.sh --stop`.
+
+### Alternative: Start Servers Manually
+
+If you prefer running backend and frontend in separate terminals:
+
+```bash
+# Terminal 1 — Backend
+source .venv/bin/activate
+PYTHONPATH=src uvicorn threattriage.main:app --reload --port 8000
+
+# Terminal 2 — Frontend
+cd frontend && npm run dev
+```
+
+### Alternative: Docker Compose
+
+```bash
+docker compose up -d
+```
+
+Starts FastAPI, Celery workers, Redis, PostgreSQL, and Flower monitoring.
+
+---
+
+## 🔑 First Steps After Starting
+
+1. **Register an account** — Click "Register" on the login page (or use the API):
+   ```bash
+   curl -X POST http://localhost:8000/api/v1/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{"username":"analyst1","email":"analyst1@soc.local","password":"SecurePass123!"}'
+   ```
+
+2. **Log in** — Use your credentials on the dashboard login page.
+
+3. **Ingest some logs** — Go to the "Log Ingestion" page, paste sample logs, and click Submit. Or use the API:
+   ```bash
+   # Get your token
+   TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"analyst1","password":"SecurePass123!"}' \
+     | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+   # Ingest sample logs
+   curl -X POST http://localhost:8000/api/v1/logs/ingest \
+     -H "Authorization: Bearer $TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "raw_logs": [
+         "Mar  5 08:23:41 host sshd[123]: Failed password for root from 1.2.3.4 port 22 ssh2",
+         "185.220.101.1 - - [05/Mar/2024:09:00:00 +0000] \"GET /api/users?id=1 UNION SELECT * FROM users HTTP/1.1\" 200 4521 \"-\" \"sqlmap/1.7\""
+       ]
+     }'
+   ```
+
+4. **Explore the dashboard** — Check Alerts, Incidents, MITRE ATT&CK map, SOAR playbooks, and the Admin panel.
+
+---
 
 ## ✨ Features
 
-### 🔍 Multi-Format Log Parsing
-- **Syslog** — RFC 3164 (BSD) and RFC 5424 with auto-detection
-- **HTTP Access Logs** — Apache/Nginx combined and common log format
-- **Database Audit Logs** — MySQL general_log and PostgreSQL statement logs
-- Plugin-based parser registry with auto-format detection
+### Log Parsing
+| Format | Details |
+|--------|---------|
+| **Syslog** | RFC 3164 (BSD) and RFC 5424, auto-detected |
+| **HTTP Access** | Apache/Nginx combined and common log format |
+| **Database Audit** | MySQL general_log, PostgreSQL statement logs |
 
-### 🧠 Intelligent Detection Engine
-- **15 built-in detection rules** (Sigma-inspired YAML format)
-  - Brute force attacks, SQL injection, XSS, path traversal
-  - Web shell upload, Log4Shell (CVE-2021-44228)
-  - Privilege escalation, suspicious commands, SSH tunneling
-  - Database exfiltration, destructive DDL, schema enumeration
-- **5 statistical anomaly detectors**
-  - Volume spike detection (Z-score based)
-  - Error rate anomaly
-  - Off-business-hours activity
-  - Distributed attack detection
-  - Rapid endpoint scanning
+### Threat Detection
+- **15 built-in rules** — Brute force, SQL injection, XSS, path traversal, web shell upload, Log4Shell, privilege escalation, SSH tunneling, DB exfiltration, and more
+- **5 statistical anomaly detectors** — Volume spikes, error rate anomaly, off-hours activity, distributed attacks, rapid scanning
+- **ML anomaly detection** — Isolation Forest model learns normal traffic and flags deviations per IP (8 behavioral features)
 
-### 🌐 Threat Intelligence Integration
-| Provider | Capabilities |
+### SOAR (Security Orchestration, Automation & Response)
+- **4 built-in playbooks** auto-triggered when alerts are created:
+  - PB-001: Critical Alert Auto-Response (block IP + notify)
+  - PB-002: Brute Force Response (block + escalate)
+  - PB-003: Lateral Movement Containment (quarantine + enrich)
+  - PB-004: Data Exfiltration Alert (notify + escalate + log)
+- 6 action types: block IP, webhook, enrich IOC, escalate, log, quarantine
+- Safe simulate mode — no real infrastructure changes in demo
+- Full execution history viewable in the SOAR Dashboard
+
+### Threat Intelligence
+| Provider | What it does |
 |----------|-------------|
-| **VirusTotal** (v3 API) | IP, domain, file hash, URL reputation |
+| **VirusTotal** | IP, domain, hash, URL reputation |
 | **AlienVault OTX** | Pulse-based threat correlation |
 | **AbuseIPDB** | IP abuse confidence scoring |
 
-- Multi-provider enrichment with weighted score aggregation
-- Redis-backed caching for rate limit management
-- Demo mode with realistic mock data (works without API keys)
+Works in **demo mode** without API keys (returns realistic mock data).
 
-### 🎯 MITRE ATT&CK Framework
-- Automatic technique mapping for all detections (27+ techniques)
-- ATT&CK Navigator layer JSON export for visualization
-- Tactic-based attack narrative generation
-- Remediation recommendations per technique
+### GeoIP Attack Map
+- Geolocates source IPs from alerts (MaxMind GeoLite2 or built-in fallback)
+- Country-level lat/lng for 20+ countries
 
-### 📊 Alert Correlation & Scoring
-- Groups alerts by source IP and time window into incidents
-- Multi-factor severity scoring: base severity × TI reputation × context weight
-- Automatic severity escalation for multi-tactic attacks
+### MITRE ATT&CK
+- 27+ techniques mapped automatically across 12 tactics
+- ATT&CK Navigator JSON export
+- Tactic-based attack narrative + remediation recommendations
 
-### 📝 Incident Response Reports
-- **JSON** — Machine-readable structured reports
-- **HTML** — Professional dark-themed reports with:
-  - Executive summary and metrics
-  - MITRE ATT&CK technique table
-  - Alert details with severity badges
-  - Event timeline
-  - IOC blocklist
-  - Remediation recommendations
-- **MITRE Navigator Layer** — Importable JSON for ATT&CK Navigator
+### Alert Correlation & Incidents
+- Groups alerts by source IP and time window
+- Multi-factor severity scoring (base × reputation × context)
+- Auto-escalation for multi-tactic attacks
 
-### 🚀 REST API (FastAPI)
-- Full OpenAPI/Swagger documentation at `/docs`
-- Endpoints for log ingestion, alert management, TI lookups
-- Dashboard metrics and MITRE heatmap data
-- API key authentication with demo-mode bypass
+### Reports
+- **JSON** and **HTML** reports with executive summary, timeline, IOC blocklist
+- **PDF** via WeasyPrint (falls back to self-contained HTML)
+- **MITRE Navigator Layer** JSON export
 
-### 💻 CLI Interface
-- `threattriage analyze` — Analyze log files with Rich terminal output
-- `threattriage serve` — Start the API server
-- `threattriage demo` — Run analysis on sample data
+### Auth & Admin
+- JWT authentication (register / login / `/me`)
+- Role-based access: **Admin**, **Analyst**, **Read-Only**
+- Admin panel: user management, audit logs, ML status, cold storage
+- Immutable audit trail for all privileged actions
+
+### Cold Storage
+- Archive old logs to gzip-compressed JSON
+- Storage stats dashboard (active vs. archived)
+- Configurable retention period
+
+### Dashboard Pages
+| Page | Description |
+|------|-------------|
+| **Dashboard** | Metrics, severity charts, top IPs, recent alerts |
+| **Alerts** | Filterable list, investigate / resolve / false-positive actions |
+| **Incidents** | Correlated incidents with MITRE technique summary |
+| **Log Ingestion** | Paste or upload log files, see parsing results in real-time |
+| **MITRE ATT&CK** | Technique heatmap with detection counts |
+| **Threat Intel** | IOC lookup (IP, domain, hash) |
+| **SOAR** | Playbook viewer, test-execute, execution timeline |
+| **Admin** | Audit logs, user management, storage, ML anomaly detection |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        ThreatTriage                             │
-├──────────┬──────────┬──────────┬──────────┬─────────────────────┤
-│  Log     │  Threat  │ Analysis │  Report  │   REST API          │
-│  Parsers │  Intel   │  Engine  │  Gen     │   (FastAPI)         │
-├──────────┼──────────┼──────────┼──────────┼─────────────────────┤
-│ Syslog   │ VirusTo. │ 15 Rules │ JSON     │ /api/v1/logs        │
-│ HTTP     │ AlienV.  │ Anomaly  │ HTML/PDF │ /api/v1/alerts      │
-│ DB Audit │ AbuseIP  │ Correlat.│ MITRE    │ /api/v1/intel       │
-│ (Plugin) │ (Multi)  │ Scoring  │ Navigator│ /api/v1/dashboard   │
-└──────────┴──────────┴──────────┴──────────┴─────────────────────┘
-     ↑           ↑          ↑          ↑              ↑
-     └───────────┴──────────┴──────────┴──────────────┘
-                    Celery + Redis (Async)
-                    PostgreSQL (Storage)
+┌──────────────────────────────────────────────────────────────────────┐
+│                          ThreatTriage                                │
+├──────────┬──────────┬──────────┬──────────┬──────────┬──────────────┤
+│  Log     │  Threat  │ Analysis │  SOAR    │  Report  │  REST API    │
+│  Parsers │  Intel   │  Engine  │  Engine  │  Gen     │  (FastAPI)   │
+├──────────┼──────────┼──────────┼──────────┼──────────┼──────────────┤
+│ Syslog   │ VirusTo. │ 15 Rules │ 4 Play-  │ JSON     │ /logs        │
+│ HTTP     │ AlienV.  │ Anomaly  │  books   │ HTML/PDF │ /alerts      │
+│ DB Audit │ AbuseIP  │ ML Isol. │ 6 Action │ MITRE    │ /incidents   │
+│ (Plugin) │ GeoIP    │ Correlat.│  Types   │ Navigator│ /soar        │
+│          │ (Multi)  │ Scoring  │ Simulate │          │ /admin       │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────────┘
+     ↑           ↑          ↑          ↑          ↑           ↑
+     └───────────┴──────────┴──────────┴──────────┴───────────┘
+              Celery + Redis (Async) │ SQLite/PostgreSQL (Storage)
+              WebSocket (Live Feed)  │ JWT Auth + RBAC
+┌──────────────────────────────────────────────────────────────────────┐
+│                    React SOC Dashboard (Vite)                        │
+│  Dashboard │ Alerts │ Incidents │ MITRE │ SOAR │ Intel │ Admin      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start
+## 📡 API Reference
 
-### Prerequisites
-- Python 3.11+
-- Docker & Docker Compose (optional, for full stack)
+Full interactive docs at **http://localhost:8000/docs** after starting the server.
 
-### 1. Clone & Install
-
+### Auth
 ```bash
-git clone https://github.com/yourusername/ThreatTriage.git
-cd ThreatTriage
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
-
-# Install
-pip install -e ".[dev]"
-
-# Copy environment config
-cp .env.example .env
-```
-
-### 2. Run Demo Analysis (No Docker Required)
-
-```bash
-# Analyze sample logs with beautiful CLI output
-threattriage analyze sample_data/syslog_sample.log --output reports/
-threattriage analyze sample_data/apache_access.log --output reports/
-threattriage analyze sample_data/db_audit.log --output reports/
-
-# Or run the full demo
-threattriage demo
-```
-
-### 3. Start the API Server
-
-```bash
-# Development server
-threattriage serve
-
-# Or directly with uvicorn
-uvicorn threattriage.main:app --reload
-```
-
-Then open **http://localhost:8000/docs** for interactive API documentation.
-
-### 4. Full Stack with Docker
-
-```bash
-docker compose up -d
-```
-
-This starts: FastAPI API, Celery workers, Redis, PostgreSQL, and Flower monitoring.
-
----
-
-## 📡 API Usage
-
-### Ingest Logs
-```bash
-# Ingest raw log lines
-curl -X POST http://localhost:8000/api/v1/logs/ingest \
+# Register
+curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "raw_logs": [
-      "Mar  5 08:23:41 host sshd[123]: Failed password for root from 1.2.3.4 port 22 ssh2",
-      "185.220.101.1 - - [05/Mar/2024:09:00:00 +0000] \"GET /api/users?id=1 UNION SELECT * FROM users HTTP/1.1\" 200 4521 \"-\" \"sqlmap/1.7\""
-    ]
-  }'
+  -d '{"username":"analyst1","email":"analyst1@soc.local","password":"SecurePass123!"}'
 
-# Upload a log file
-curl -X POST http://localhost:8000/api/v1/logs/upload \
-  -F "file=@sample_data/syslog_sample.log"
+# Login → returns { "access_token": "..." }
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"analyst1","password":"SecurePass123!"}'
 ```
 
-### Query Alerts & Dashboard
+### Core Endpoints
 ```bash
-# List all alerts
-curl http://localhost:8000/api/v1/alerts
+# All examples assume: TOKEN=<your JWT token>
+
+# Ingest logs
+curl -X POST http://localhost:8000/api/v1/logs/ingest \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"raw_logs": ["Mar 5 08:23:41 host sshd[123]: Failed password for root from 1.2.3.4 port 22"]}'
+
+# List alerts
+curl http://localhost:8000/api/v1/alerts -H "Authorization: Bearer $TOKEN"
+
+# List incidents
+curl http://localhost:8000/api/v1/incidents -H "Authorization: Bearer $TOKEN"
 
 # Dashboard metrics
-curl http://localhost:8000/api/v1/dashboard/metrics
+curl http://localhost:8000/api/v1/dashboard/metrics -H "Authorization: Bearer $TOKEN"
 
-# MITRE heatmap
-curl http://localhost:8000/api/v1/dashboard/mitre
+# GeoIP data
+curl http://localhost:8000/api/v1/dashboard/geoip -H "Authorization: Bearer $TOKEN"
 ```
 
-### Threat Intelligence Lookup
+### SOAR
 ```bash
-curl -X POST http://localhost:8000/api/v1/intel/lookup \
-  -H "Content-Type: application/json" \
-  -d '{"ioc_type": "ip", "value": "185.220.101.1"}'
+curl http://localhost:8000/api/v1/soar/playbooks -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8000/api/v1/soar/history -H "Authorization: Bearer $TOKEN"
+```
+
+### ML Anomaly Detection
+```bash
+curl http://localhost:8000/api/v1/ml/status -H "Authorization: Bearer $TOKEN"
+curl -X POST http://localhost:8000/api/v1/ml/detect -H "Authorization: Bearer $TOKEN"
+```
+
+### Admin
+```bash
+curl http://localhost:8000/api/v1/admin/audit-logs -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8000/api/v1/admin/users -H "Authorization: Bearer $TOKEN"
+curl http://localhost:8000/api/v1/admin/storage/stats -H "Authorization: Bearer $TOKEN"
+curl -X POST "http://localhost:8000/api/v1/admin/storage/rotate?retention_days=7" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### PDF Reports
+```bash
+curl -X POST http://localhost:8000/api/v1/incidents/{incident_id}/pdf \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
@@ -202,15 +275,11 @@ curl -X POST http://localhost:8000/api/v1/intel/lookup \
 ## 🧪 Testing
 
 ```bash
-# Run all tests
+source .venv/bin/activate
 pytest tests/ -v
 
 # With coverage
 pytest tests/ -v --cov=src/threattriage --cov-report=term-missing
-
-# Run specific test modules
-pytest tests/test_parsers.py -v
-pytest tests/test_analysis.py -v
 ```
 
 ---
@@ -219,76 +288,88 @@ pytest tests/test_analysis.py -v
 
 ```
 ThreatTriage/
+├── start.sh                  # ⭐ One-command startup script
 ├── src/threattriage/
-│   ├── main.py              # FastAPI application
-│   ├── config.py             # Pydantic Settings
-│   ├── database.py           # Async SQLModel engine
-│   ├── celery_app.py         # Celery configuration
-│   ├── cli.py                # Typer CLI
-│   ├── models/               # SQLModel DB models
-│   ├── schemas/              # Pydantic API schemas
-│   ├── parsers/              # Log parsing engine
-│   │   ├── base.py           # Parser registry
-│   │   ├── syslog.py         # RFC 3164/5424
-│   │   ├── http_access.py    # Apache/Nginx
-│   │   └── db_audit.py       # MySQL/PostgreSQL
-│   ├── intel/                # Threat Intelligence
-│   │   ├── virustotal.py     # VirusTotal v3
-│   │   ├── alienvault.py     # AlienVault OTX
-│   │   ├── abuseipdb.py      # AbuseIPDB
-│   │   └── enrichment.py     # Multi-provider pipeline
-│   ├── analysis/             # Detection engine
-│   │   ├── detection.py      # 15 Sigma-inspired rules
-│   │   ├── anomaly.py        # Statistical anomalies
-│   │   ├── correlator.py     # Alert correlation
-│   │   ├── scorer.py         # Severity scoring
-│   │   └── mitre_mapper.py   # MITRE ATT&CK mapping
-│   ├── reports/              # Report generation
-│   │   ├── generator.py
-│   │   └── templates/
-│   └── api/v1/               # REST API routers
-├── tests/                    # Pytest test suite
+│   ├── main.py               # FastAPI app with lifespan
+│   ├── config.py             # Pydantic Settings (env vars)
+│   ├── database.py           # Async SQLModel + SQLite/PostgreSQL
+│   ├── auth.py               # JWT + bcrypt password hashing
+│   ├── celery_app.py         # Celery task queue config
+│   ├── cli.py                # CLI commands (analyze, serve, demo)
+│   ├── models/               # DB models (Alert, Incident, LogEntry, User, AuditLog, IOC)
+│   ├── parsers/              # Syslog, HTTP access, DB audit parsers
+│   ├── intel/                # VirusTotal, AlienVault, AbuseIPDB, GeoIP
+│   ├── analysis/             # Detection rules, anomaly, ML, correlator, scorer, MITRE mapper
+│   ├── soar/                 # SOAR playbook engine (4 playbooks, 6 action types)
+│   ├── reports/              # HTML/JSON/PDF report generators
+│   ├── tasks/                # Celery tasks + cold storage rotation
+│   └── api/v1/               # REST routes (core, auth, intel, admin, websocket)
+├── frontend/                 # React 19 + Vite 7 SPA
+│   └── src/
+│       ├── pages/            # Dashboard, Alerts, Incidents, Logs, MITRE,
+│       │                     # ThreatIntel, SOARDashboard, AdminPanel
+│       ├── components/       # Sidebar
+│       └── api.js            # API client with JWT auth
+├── tests/                    # Pytest suite
 ├── sample_data/              # Demo log files
-├── docker-compose.yml        # Full-stack deployment
-├── Dockerfile               # Multi-stage build
-└── pyproject.toml           # Project configuration
+├── reports/                  # Generated reports (gitignored)
+├── docker-compose.yml        # Full-stack Docker deployment
+└── pyproject.toml            # Python project config
 ```
 
 ---
 
 ## 🔧 Configuration
 
-All configuration is managed via environment variables or `.env` file:
+Set via environment variables or a `.env` file in the project root:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `sqlite+aiosqlite:///./threattriage.db` | Database connection |
-| `REDIS_URL` | `redis://localhost:6379/0` | Redis connection |
-| `VIRUSTOTAL_API_KEY` | *(empty)* | VirusTotal API key |
-| `ALIENVAULT_API_KEY` | *(empty)* | AlienVault OTX key |
-| `ABUSEIPDB_API_KEY` | *(empty)* | AbuseIPDB API key |
-| `DEMO_MODE` | `true` | Enable demo mode (mock TI data) |
-| `API_KEY` | `threat-triage-dev-key` | API authentication key |
+| `DATABASE_URL` | `sqlite+aiosqlite:///./threattriage.db` | Database connection string |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis (for Celery tasks) |
+| `DEMO_MODE` | `true` | Use mock threat intel data (no API keys needed) |
+| `JWT_SECRET_KEY` | `change-me-in-production` | Secret for signing JWT tokens |
+| `JWT_EXPIRE_MINUTES` | `1440` | Token expiry (default 24 hours) |
+| `VIRUSTOTAL_API_KEY` | *(empty)* | VirusTotal API key (optional) |
+| `ALIENVAULT_API_KEY` | *(empty)* | AlienVault OTX key (optional) |
+| `ABUSEIPDB_API_KEY` | *(empty)* | AbuseIPDB key (optional) |
+| `API_KEY` | `threat-triage-dev-key` | API key authentication |
+
+> **Note:** Everything works out of the box in demo mode. API keys are only needed if you want real threat intelligence enrichment.
 
 ---
 
 ## 🎯 MITRE ATT&CK Coverage
 
-ThreatTriage detects and maps to the following MITRE ATT&CK tactics:
-
 | Tactic | Techniques | Example Detection |
 |--------|-----------|-------------------|
-| **Reconnaissance** | T1595.002 | Security scanner signatures |
-| **Initial Access** | T1190, T1078, T1189 | SQL injection, valid accounts |
-| **Execution** | T1059, T1203 | Command injection, exploits |
-| **Persistence** | T1136, T1505.003, T1053 | Account creation, web shells, cron |
-| **Privilege Escalation** | T1548.003 | Sudo abuse |
-| **Credential Access** | T1110 | Brute force attacks |
-| **Discovery** | T1083, T1046 | Path traversal, port scanning |
-| **Collection** | T1005, T1530 | Data access patterns |
-| **Exfiltration** | T1041, T1048 | Large transfers, DB exports |
-| **Command & Control** | T1572 | SSH tunneling |
-| **Impact** | T1485, T1498, T1561 | Data destruction, DoS |
+| Reconnaissance | T1595.002 | Security scanner signatures |
+| Initial Access | T1190, T1078, T1189 | SQL injection, valid accounts |
+| Execution | T1059, T1203 | Command injection, exploits |
+| Persistence | T1136, T1505.003, T1053 | Account creation, web shells |
+| Privilege Escalation | T1548.003 | Sudo abuse |
+| Credential Access | T1110 | Brute force attacks |
+| Discovery | T1083, T1046 | Path traversal, port scanning |
+| Lateral Movement | T1021 | SSH tunneling |
+| Collection | T1005, T1530 | Data access patterns |
+| Exfiltration | T1041, T1048 | Large transfers, DB exports |
+| Command & Control | T1572 | SSH tunneling |
+| Impact | T1485, T1498, T1561 | Data destruction, DoS |
+
+---
+
+## 🐳 CLI Usage
+
+```bash
+# Analyze a log file (outputs to terminal with Rich formatting)
+threattriage analyze sample_data/syslog_sample.log --output reports/
+
+# Run the full demo on all sample data
+threattriage demo
+
+# Start the API server
+threattriage serve
+```
 
 ---
 
