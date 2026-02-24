@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Send, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Upload, Send, FileText, CheckCircle, AlertTriangle, Terminal } from 'lucide-react';
 import { ingestLogs, uploadLogFile } from '../api';
 
 const SAMPLE_LOGS = `Mar  5 08:23:41 webserver01 sshd[12345]: Failed password for root from 185.220.101.1 port 44123 ssh2
@@ -45,11 +45,16 @@ export default function LogIngestion() {
         setLoading(false);
     };
 
+    const lineCount = rawLogs ? rawLogs.split('\n').filter(l => l.trim()).length : 0;
+
     return (
         <div>
             <div className="page-header">
-                <h2>📄 Log Ingestion</h2>
-                <p>Paste raw logs or upload log files for automated analysis</p>
+                <h2>
+                    <Terminal className="page-icon" size={20} />
+                    Log Ingestion
+                </h2>
+                <p>{'>'} paste raw logs or upload files for automated pipeline analysis</p>
             </div>
 
             <div className="grid-2">
@@ -58,60 +63,78 @@ export default function LogIngestion() {
                     <div className="card-header">
                         <span className="card-title">Raw Log Input</span>
                         <button className="btn btn-secondary btn-sm" onClick={() => setRawLogs(SAMPLE_LOGS)}>
-                            Load Sample Data
+                            Load Sample
                         </button>
                     </div>
 
                     <div style={{ marginBottom: '0.75rem' }}>
-                        <label className="form-label">Log Type (optional — auto-detects if omitted)</label>
+                        <label className="form-label" style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+                            LOG TYPE (auto-detects if omitted)
+                        </label>
                         <select className="form-select" value={logType} onChange={e => setLogType(e.target.value)}>
                             <option value="">Auto-detect</option>
                             <option value="syslog">Syslog</option>
                             <option value="http_access">HTTP Access Log</option>
                             <option value="db_audit">DB Audit Log</option>
+                            <option value="windows_event">Windows Event Log</option>
+                            <option value="json">JSON Structured</option>
+                            <option value="firewall">Firewall Log</option>
+                            <option value="ids">IDS/IPS (Suricata/Snort)</option>
                         </select>
                     </div>
 
                     <div style={{ marginBottom: '0.75rem' }}>
-                        <label className="form-label">Log Lines</label>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <label className="form-label" style={{ fontFamily: 'JetBrains Mono', fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+                                LOG LINES
+                            </label>
+                            {lineCount > 0 && (
+                                <span style={{ fontSize: '0.65rem', color: 'var(--cyber-green)', fontFamily: 'JetBrains Mono' }}>
+                                    {lineCount} lines buffered
+                                </span>
+                            )}
+                        </div>
                         <textarea
                             className="form-textarea"
                             rows={12}
-                            placeholder="Paste raw log lines here..."
+                            placeholder="$ paste raw log lines here..."
                             value={rawLogs}
                             onChange={e => setRawLogs(e.target.value)}
+                            style={{ fontFamily: 'JetBrains Mono', fontSize: '0.78rem', color: 'var(--cyber-green)', background: 'var(--bg-primary)' }}
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || !rawLogs.trim()}>
-                            {loading ? <div className="loading-spinner" style={{ width: 16, height: 16, margin: 0 }} /> : <Send size={16} />}
-                            Analyze Logs
+                            {loading ? <div className="loading-spinner" style={{ width: 16, height: 16, margin: 0 }} /> : <Send size={14} />}
+                            Analyze
                         </button>
                         <button className="btn btn-secondary" onClick={() => fileRef.current?.click()} disabled={loading}>
-                            <Upload size={16} /> Upload File
+                            <Upload size={14} /> Upload
                         </button>
-                        <input type="file" ref={fileRef} onChange={handleFile} style={{ display: 'none' }} accept=".log,.txt,.csv" />
+                        <input type="file" ref={fileRef} onChange={handleFile} style={{ display: 'none' }} accept=".log,.txt,.csv,.json,.xml,.evtx" />
                     </div>
                 </div>
 
                 {/* Results Panel */}
                 <div className="card">
                     <div className="card-header">
-                        <span className="card-title">Analysis Results</span>
+                        <span className="card-title">Analysis Output</span>
                     </div>
 
                     {!result && !loading && (
                         <div className="empty-state">
-                            <FileText size={40} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                            <p>Submit logs to see analysis results</p>
+                            <FileText size={40} style={{ marginBottom: '1rem', opacity: 0.3, color: 'var(--cyber-green)' }} />
+                            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>
+                                {'>'} awaiting log submission...
+                            </p>
                         </div>
                     )}
 
                     {loading && (
                         <div className="loading-state">
                             <div className="loading-spinner" />
-                            <p>Analyzing logs...</p>
+                            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>Processing pipeline...</p>
                         </div>
                     )}
 
@@ -119,11 +142,11 @@ export default function LogIngestion() {
                         <div className="animate-in">
                             <div className="stats-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                                 <div className="stat-card">
-                                    <div className="stat-value" style={{ fontSize: '1.5rem' }}>{result.total_lines}</div>
+                                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--text-bright)' }}>{result.total_lines}</div>
                                     <div className="stat-label">Lines Received</div>
                                 </div>
                                 <div className="stat-card">
-                                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--success)' }}>{result.parsed}</div>
+                                    <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--cyber-green)' }}>{result.parsed}</div>
                                     <div className="stat-label">Parsed</div>
                                 </div>
                                 <div className="stat-card">
@@ -132,38 +155,32 @@ export default function LogIngestion() {
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-value" style={{ fontSize: '1.5rem', color: 'var(--critical)' }}>{result.alerts_generated}</div>
-                                    <div className="stat-label">Alerts Generated</div>
+                                    <div className="stat-label">Alerts</div>
                                 </div>
                             </div>
 
-                            <div style={{
-                                marginTop: '1rem', padding: '0.75rem', borderRadius: 'var(--radius-sm)',
-                                background: result.alerts_generated > 0 ? 'var(--critical-bg)' : 'var(--success-bg)',
-                                border: `1px solid ${result.alerts_generated > 0 ? 'var(--critical-border)' : 'rgba(16,185,129,0.25)'}`,
-                                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                            }}>
-                                {result.alerts_generated > 0 ? (
-                                    <>
-                                        <AlertTriangle size={16} style={{ color: 'var(--critical)' }} />
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--critical)' }}>
-                                            <strong>{result.alerts_generated}</strong> security alerts generated — check the Alerts & Incidents pages.
+                            {/* Terminal-style result summary */}
+                            <div className="terminal-box" style={{ marginTop: '1rem' }}>
+                                <div className="terminal-output">
+                                    {result.alerts_generated > 0 ? (
+                                        <span style={{ color: 'var(--critical)' }}>
+                                            [ALERT] {result.alerts_generated} threat(s) detected — check Alerts & Incidents
                                         </span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle size={16} style={{ color: 'var(--success)' }} />
-                                        <span style={{ fontSize: '0.85rem', color: 'var(--success)' }}>
-                                            No threats detected in submitted logs.
+                                    ) : (
+                                        <span style={{ color: 'var(--cyber-green)' }}>
+                                            [OK] No threats detected in submitted logs
                                         </span>
-                                    </>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {result?.error && (
-                        <div style={{ padding: '1rem', background: 'var(--critical-bg)', borderRadius: 'var(--radius-sm)', color: 'var(--critical)' }}>
-                            Error: {result.error}
+                        <div className="terminal-box" style={{ borderColor: 'var(--critical)' }}>
+                            <div className="terminal-output" style={{ color: 'var(--critical)' }}>
+                                [ERR] {result.error}
+                            </div>
                         </div>
                     )}
                 </div>

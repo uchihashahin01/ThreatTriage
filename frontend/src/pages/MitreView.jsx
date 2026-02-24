@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Target, ExternalLink } from 'lucide-react';
+import { Crosshair, ExternalLink, Terminal } from 'lucide-react';
 import { fetchMitreHeatmap } from '../api';
 
 const HEAT_COLORS = [
-    { min: 0, color: 'var(--border-color)', text: 'var(--text-dim)' },
-    { min: 1, color: 'rgba(79, 107, 255, 0.15)', text: '#7c8aff' },
-    { min: 3, color: 'rgba(255, 190, 11, 0.15)', text: '#ffbe0b' },
-    { min: 5, color: 'rgba(255, 140, 66, 0.2)', text: '#ff8c42' },
-    { min: 10, color: 'rgba(255, 71, 87, 0.25)', text: '#ff4757' },
+    { min: 0, color: 'rgba(255,255,255,0.03)', text: 'var(--text-dim)' },
+    { min: 1, color: 'rgba(0,212,255,0.12)', text: '#00d4ff' },
+    { min: 3, color: 'rgba(255,184,0,0.14)', text: '#ffb800' },
+    { min: 5, color: 'rgba(255,107,0,0.18)', text: '#ff6b00' },
+    { min: 10, color: 'rgba(255,0,64,0.22)', text: '#ff0040' },
 ];
 
 function getHeatStyle(count) {
@@ -36,11 +36,15 @@ export default function MitreView() {
             .catch(() => setLoading(false));
     }, []);
 
-    if (loading) return <div className="loading-state"><div className="loading-spinner" /></div>;
+    if (loading) return (
+        <div className="loading-state">
+            <div className="loading-spinner" />
+            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.8rem' }}>Loading MITRE data...</p>
+        </div>
+    );
 
     const techniques = data?.techniques || [];
 
-    // Group by tactic
     const tacticGroups = {};
     for (const tech of techniques) {
         const tactic = tech.tactic || 'Unknown';
@@ -51,45 +55,47 @@ export default function MitreView() {
     return (
         <div>
             <div className="page-header">
-                <h2>🎯 MITRE ATT&CK Coverage</h2>
-                <p>Techniques detected across ingested logs mapped to the MITRE ATT&CK framework</p>
+                <h2>
+                    <Crosshair className="page-icon" size={20} />
+                    MITRE ATT&CK Coverage
+                </h2>
+                <p>{'>'} technique heatmap from detected threats mapped to ATT&CK framework</p>
             </div>
 
             {/* Summary Stats */}
-            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '1.5rem' }}>
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '1.25rem' }}>
                 <div className="stat-card animate-in animate-in-delay-1">
-                    <div className="stat-value">{techniques.length}</div>
-                    <div className="stat-label">Techniques Detected</div>
+                    <div className="stat-value" style={{ color: 'var(--cyber-green)' }}>{techniques.length}</div>
+                    <div className="stat-label">Techniques</div>
                 </div>
                 <div className="stat-card animate-in animate-in-delay-2">
-                    <div className="stat-value">{Object.keys(tacticGroups).length}</div>
-                    <div className="stat-label">Tactics Covered</div>
+                    <div className="stat-value" style={{ color: 'var(--cyber-blue)' }}>{Object.keys(tacticGroups).length}</div>
+                    <div className="stat-label">Tactics</div>
                 </div>
                 <div className="stat-card animate-in animate-in-delay-3">
-                    <div className="stat-value">{data?.total_detections || 0}</div>
-                    <div className="stat-label">Total Detections</div>
+                    <div className="stat-value" style={{ color: 'var(--critical)' }}>{data?.total_detections || 0}</div>
+                    <div className="stat-label">Total Hits</div>
                 </div>
             </div>
 
             {techniques.length === 0 ? (
                 <div className="empty-state" style={{ marginTop: '3rem' }}>
-                    <Target size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                    <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>No MITRE Data</h3>
-                    <p>Analyze some logs to see MITRE ATT&CK technique coverage.</p>
+                    <Terminal size={48} style={{ marginBottom: '1rem', opacity: 0.3, color: 'var(--cyber-green)' }} />
+                    <h3 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>No MITRE Data</h3>
+                    <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>
+                        {'>'} Ingest and analyze logs to populate technique coverage
+                    </p>
                 </div>
             ) : (
                 <>
                     {/* Heatmap Grid */}
-                    <div className="card animate-in" style={{ marginBottom: '1.5rem' }}>
+                    <div className="card animate-in" style={{ marginBottom: '1.25rem' }}>
                         <div className="card-header">
-                            <span className="card-title">Technique Detection Heatmap</span>
-                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.7rem', color: 'var(--text-dim)' }}>
-                                <span>Intensity:</span>
+                            <span className="card-title">Detection Heatmap</span>
+                            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'JetBrains Mono' }}>
                                 {HEAT_COLORS.slice(1).map((level, i) => (
-                                    <span key={i} style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: '0.25rem'
-                                    }}>
-                                        <span style={{ width: 12, height: 12, borderRadius: 3, background: level.color, display: 'inline-block' }} />
+                                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                                        <span style={{ width: 10, height: 10, borderRadius: 2, background: level.text, display: 'inline-block', opacity: 0.7 }} />
                                         {level.min}+
                                     </span>
                                 ))}
@@ -132,8 +138,8 @@ export default function MitreView() {
                                 <tr>
                                     <th>Tactic</th>
                                     <th>Techniques</th>
-                                    <th>Total Detections</th>
-                                    <th>Details</th>
+                                    <th>Detections</th>
+                                    <th>IDs</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -143,12 +149,12 @@ export default function MitreView() {
                                         <tr key={idx}>
                                             <td><span className="tag">{tactic}</span></td>
                                             <td className="mono">{techs.length}</td>
-                                            <td className="mono" style={{ fontWeight: 700 }}>{totalCount}</td>
+                                            <td className="mono" style={{ fontWeight: 700, color: totalCount >= 5 ? 'var(--critical)' : 'var(--text-primary)' }}>{totalCount}</td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                                                     {techs.map((t, i) => (
                                                         <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
-                                                            style={{ color: 'var(--accent-primary)', fontSize: '0.75rem', fontFamily: 'JetBrains Mono' }}>
+                                                            style={{ color: 'var(--cyber-green)', fontSize: '0.72rem', fontFamily: 'JetBrains Mono' }}>
                                                             {t.technique_id}
                                                         </a>
                                                     ))}

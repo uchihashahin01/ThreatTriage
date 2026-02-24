@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
-    Search, Globe, Hash, Link2, Shield, AlertTriangle,
-    CheckCircle, XCircle, Loader,
+    Search, Globe, Hash, Link2, Shield,
+    CheckCircle, XCircle, Loader, Radar,
 } from 'lucide-react';
 import { lookupIOC } from '../api';
 
@@ -35,19 +35,24 @@ export default function ThreatIntel() {
 
     const selectedType = IOC_TYPES.find(t => t.value === iocType);
 
+    const scoreColor = (s) => s > 70 ? 'var(--critical)' : s > 30 ? 'var(--medium)' : 'var(--cyber-green)';
+
     return (
         <div>
             <div className="page-header">
-                <h2>🔍 Threat Intelligence</h2>
-                <p>Look up IOCs against VirusTotal, AlienVault OTX, and AbuseIPDB</p>
+                <h2>
+                    <Radar className="page-icon" size={20} />
+                    Threat Intelligence
+                </h2>
+                <p>{'>'} IOC lookup against VirusTotal, AlienVault OTX, AbuseIPDB</p>
             </div>
 
             {/* Input */}
-            <div className="card" style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+            <div className="card" style={{ marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div>
-                        <label className="form-label">IOC Type</label>
-                        <select className="form-select" style={{ minWidth: 140 }}
+                        <label className="form-label" style={{ fontFamily: 'JetBrains Mono', fontSize: '0.65rem', letterSpacing: '0.05em' }}>IOC TYPE</label>
+                        <select className="form-select" style={{ minWidth: 130 }}
                             value={iocType} onChange={e => setIocType(e.target.value)}>
                             {IOC_TYPES.map(t => (
                                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -55,18 +60,18 @@ export default function ThreatIntel() {
                         </select>
                     </div>
                     <div style={{ flex: 1 }}>
-                        <label className="form-label">Value</label>
+                        <label className="form-label" style={{ fontFamily: 'JetBrains Mono', fontSize: '0.65rem', letterSpacing: '0.05em' }}>VALUE</label>
                         <input
                             className="form-input"
                             placeholder={selectedType?.placeholder}
                             value={value}
                             onChange={e => setValue(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && handleLookup()}
-                            style={{ fontFamily: 'JetBrains Mono', fontSize: '0.85rem' }}
+                            style={{ fontFamily: 'JetBrains Mono', fontSize: '0.82rem', color: 'var(--cyber-green)' }}
                         />
                     </div>
                     <button className="btn btn-primary" onClick={handleLookup} disabled={loading || !value.trim()}>
-                        {loading ? <Loader size={16} className="loading-spinner" style={{ width: 16, height: 16, margin: 0, borderWidth: 2 }} /> : <Search size={16} />}
+                        {loading ? <Loader size={14} className="loading-spinner" style={{ width: 14, height: 14, margin: 0, borderWidth: 2 }} /> : <Search size={14} />}
                         Lookup
                     </button>
                 </div>
@@ -81,15 +86,17 @@ export default function ThreatIntel() {
 
                     {!result && !loading && (
                         <div className="empty-state">
-                            <Shield size={40} style={{ marginBottom: '1rem', opacity: 0.3 }} />
-                            <p>Enter an IOC to search threat intelligence</p>
+                            <Shield size={40} style={{ marginBottom: '1rem', opacity: 0.3, color: 'var(--cyber-green)' }} />
+                            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>
+                                {'>'} enter an IOC to query threat intel
+                            </p>
                         </div>
                     )}
 
                     {loading && (
                         <div className="loading-state">
                             <div className="loading-spinner" />
-                            <p>Querying providers...</p>
+                            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>Querying providers...</p>
                         </div>
                     )}
 
@@ -97,54 +104,47 @@ export default function ThreatIntel() {
                         <div className="animate-in">
                             {/* Score Gauge */}
                             <div style={{
-                                textAlign: 'center',
-                                padding: '1.5rem',
-                                marginBottom: '1rem',
+                                textAlign: 'center', padding: '1.25rem', marginBottom: '1rem',
                                 borderRadius: 'var(--radius-md)',
-                                background: result.aggregated_score > 70
-                                    ? 'var(--critical-bg)'
-                                    : result.aggregated_score > 30
-                                        ? 'var(--medium-bg)'
-                                        : 'var(--success-bg)',
-                                border: `1px solid ${result.aggregated_score > 70
-                                    ? 'var(--critical-border)'
-                                    : result.aggregated_score > 30
-                                        ? 'var(--medium-border)'
-                                        : 'rgba(16,185,129,0.25)'}`,
+                                background: 'var(--bg-primary)',
+                                border: `1px solid ${scoreColor(result.aggregated_score)}33`,
                             }}>
                                 <div style={{
-                                    fontSize: '3rem', fontWeight: 900, fontFamily: 'JetBrains Mono',
-                                    color: result.aggregated_score > 70 ? 'var(--critical)' : result.aggregated_score > 30 ? 'var(--medium)' : 'var(--success)',
+                                    fontSize: '2.8rem', fontWeight: 900, fontFamily: 'JetBrains Mono',
+                                    color: scoreColor(result.aggregated_score),
+                                    textShadow: `0 0 20px ${scoreColor(result.aggregated_score)}44`,
                                 }}>
                                     {Math.round(result.aggregated_score || 0)}
                                 </div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
-                                    Aggregated Threat Score
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '0.2rem', fontFamily: 'JetBrains Mono', letterSpacing: '0.08em' }}>
+                                    THREAT SCORE
                                 </div>
                                 <div style={{
                                     marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
                                 }}>
                                     {result.is_malicious ? (
                                         <>
-                                            <XCircle size={16} style={{ color: 'var(--critical)' }} />
-                                            <span style={{ fontWeight: 700, color: 'var(--critical)' }}>MALICIOUS</span>
+                                            <XCircle size={14} style={{ color: 'var(--critical)' }} />
+                                            <span style={{ fontWeight: 800, color: 'var(--critical)', fontFamily: 'JetBrains Mono', fontSize: '0.75rem', letterSpacing: '0.1em' }}>MALICIOUS</span>
                                         </>
                                     ) : (
                                         <>
-                                            <CheckCircle size={16} style={{ color: 'var(--success)' }} />
-                                            <span style={{ fontWeight: 700, color: 'var(--success)' }}>CLEAN</span>
+                                            <CheckCircle size={14} style={{ color: 'var(--cyber-green)' }} />
+                                            <span style={{ fontWeight: 800, color: 'var(--cyber-green)', fontFamily: 'JetBrains Mono', fontSize: '0.75rem', letterSpacing: '0.1em' }}>CLEAN</span>
                                         </>
                                     )}
                                 </div>
                             </div>
 
                             {/* Details */}
-                            <div style={{ fontSize: '0.85rem' }}>
+                            <div style={{ fontSize: '0.82rem' }}>
                                 {result.tags?.length > 0 && (
                                     <div className="detail-row">
                                         <span className="detail-label">Tags</span>
-                                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                                            {result.tags.map((t, i) => <span key={i} className="tag">{t}</span>)}
+                                        <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                                            {result.tags.map((t, i) => (
+                                                <span key={i} className={`tag ${t.toLowerCase().includes('malicious') || t.toLowerCase().includes('malware') ? 'tag-red' : ''}`}>{t}</span>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -157,40 +157,40 @@ export default function ThreatIntel() {
                                 {result.asn && (
                                     <div className="detail-row">
                                         <span className="detail-label">ASN</span>
-                                        <span className="detail-value mono">{result.asn}</span>
+                                        <span className="detail-value mono" style={{ color: 'var(--cyber-green)' }}>{result.asn}</span>
                                     </div>
                                 )}
                                 {result.org && (
                                     <div className="detail-row">
-                                        <span className="detail-label">Organization</span>
+                                        <span className="detail-label">Org</span>
                                         <span className="detail-value">{result.org}</span>
                                     </div>
                                 )}
                                 <div className="detail-row">
                                     <span className="detail-label">Providers</span>
-                                    <span className="detail-value">{result.providers_queried || 0} queried</span>
+                                    <span className="detail-value mono">{result.providers_queried || 0} queried</span>
                                 </div>
                             </div>
 
                             {/* Per-provider results */}
                             {result.provider_results && Object.entries(result.provider_results).map(([name, prov], idx) => (
                                 <div key={idx} style={{
-                                    marginTop: '0.75rem', padding: '0.75rem',
+                                    marginTop: '0.6rem', padding: '0.6rem 0.75rem',
                                     background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)',
-                                    border: `1px solid ${prov.is_malicious ? 'var(--critical-border)' : 'var(--border-color)'}`,
+                                    borderLeft: `2px solid ${prov.is_malicious ? 'var(--critical)' : 'var(--cyber-green)'}`,
                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
-                                        <span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'capitalize' }}>{name}</span>
-                                        <span className={`severity-badge ${prov.is_malicious ? 'severity-critical' : 'severity-low'}`}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                        <span style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', fontFamily: 'JetBrains Mono', letterSpacing: '0.05em' }}>{name}</span>
+                                        <span className={`severity-badge ${prov.is_malicious ? 'severity-critical' : 'severity-low'}`} style={{ fontSize: '0.6rem' }}>
                                             {prov.is_malicious ? 'MALICIOUS' : 'CLEAN'}
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                                        Score: <span className="mono" style={{ fontWeight: 700 }}>{Math.round(prov.reputation_score || 0)}</span>
-                                        {prov.confidence > 0 && <> · Confidence: <span className="mono">{Math.round(prov.confidence)}%</span></>}
+                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'JetBrains Mono' }}>
+                                        Score: <span style={{ fontWeight: 700, color: scoreColor(prov.reputation_score || 0) }}>{Math.round(prov.reputation_score || 0)}</span>
+                                        {prov.confidence > 0 && <> | Conf: <span className="mono">{Math.round(prov.confidence)}%</span></>}
                                     </div>
                                     {prov.description && (
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>{prov.description}</div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{prov.description}</div>
                                     )}
                                 </div>
                             ))}
@@ -198,8 +198,10 @@ export default function ThreatIntel() {
                     )}
 
                     {result?.error && (
-                        <div style={{ padding: '1rem', background: 'var(--critical-bg)', borderRadius: 'var(--radius-sm)', color: 'var(--critical)' }}>
-                            Error: {result.error}
+                        <div className="terminal-box" style={{ borderColor: 'var(--critical)' }}>
+                            <div className="terminal-output" style={{ color: 'var(--critical)' }}>
+                                [ERR] {result.error}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -211,31 +213,31 @@ export default function ThreatIntel() {
                     </div>
                     {history.length === 0 ? (
                         <div className="empty-state">
-                            <p style={{ fontSize: '0.85rem' }}>Recent lookups appear here</p>
+                            <p style={{ fontFamily: 'JetBrains Mono', fontSize: '0.75rem' }}>{'>'} recent lookups will appear here</p>
                         </div>
                     ) : (
                         <div>
                             {history.map((h, idx) => (
                                 <div key={idx} className="animate-in"
                                     style={{
-                                        display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                        padding: '0.6rem 0', borderBottom: '1px solid var(--border-color)',
+                                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                                        padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)',
                                         cursor: 'pointer',
                                     }}
                                     onClick={() => { setIocType(h.type); setValue(h.value); }}
                                 >
-                                    <span className="tag" style={{ minWidth: 40, justifyContent: 'center' }}>{h.type}</span>
+                                    <span className="tag" style={{ minWidth: 36, justifyContent: 'center', fontFamily: 'JetBrains Mono', fontSize: '0.6rem' }}>{h.type.toUpperCase()}</span>
                                     <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div className="mono" style={{ fontSize: '0.82rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        <div className="mono" style={{ fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--cyber-green)' }}>
                                             {h.value}
                                         </div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>
+                                        <div style={{ fontSize: '0.62rem', color: 'var(--text-dim)', fontFamily: 'JetBrains Mono' }}>
                                             {h.time.toLocaleTimeString()}
                                         </div>
                                     </div>
                                     <div style={{
-                                        fontFamily: 'JetBrains Mono', fontWeight: 800, fontSize: '0.9rem',
-                                        color: h.score > 70 ? 'var(--critical)' : h.score > 30 ? 'var(--medium)' : 'var(--success)',
+                                        fontFamily: 'JetBrains Mono', fontWeight: 800, fontSize: '0.85rem',
+                                        color: scoreColor(h.score),
                                     }}>
                                         {Math.round(h.score || 0)}
                                     </div>
