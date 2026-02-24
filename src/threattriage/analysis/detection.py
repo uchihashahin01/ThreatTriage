@@ -222,10 +222,19 @@ BUILTIN_RULES: list[DetectionRule] = [
 class DetectionEngine:
     """Evaluates parsed logs against detection rules."""
 
-    def __init__(self, extra_rules: list[DetectionRule] | None = None) -> None:
+    def __init__(self, extra_rules: list[DetectionRule] | None = None, sigma_dir: str | None = None) -> None:
         self.rules = list(BUILTIN_RULES)
         if extra_rules:
             self.rules.extend(extra_rules)
+        # Load Sigma YAML rules if directory provided
+        if sigma_dir:
+            try:
+                from threattriage.analysis.sigma_loader import load_sigma_directory
+                sigma_rules = load_sigma_directory(sigma_dir)
+                self.rules.extend(sigma_rules)
+                logger.info("sigma_rules_loaded", count=len(sigma_rules), directory=sigma_dir)
+            except Exception as e:
+                logger.warning("sigma_load_failed", error=str(e))
         # Compile all regex patterns
         for rule in self.rules:
             rule.compile()

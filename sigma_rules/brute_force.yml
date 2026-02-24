@@ -1,0 +1,19 @@
+title: Brute Force Login Attempt
+id: bruteforce-01
+status: stable
+level: high
+description: Detects multiple failed login attempts indicating brute force attack
+tags:
+  - attack.credential_access
+  - attack.t1110
+logsource:
+  category: authentication
+  product: windows
+detection:
+  selection:
+    - 'failed login'
+    - 'authentication failure'
+    - 'invalid password'
+    - 'Account Failed to Log on'
+    - 'Event ID 4625'
+  condition: selection

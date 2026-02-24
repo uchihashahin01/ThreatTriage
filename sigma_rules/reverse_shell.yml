@@ -1,0 +1,22 @@
+title: Potential Reverse Shell Command
+id: reverse-shell-01
+status: stable
+level: critical
+description: Detects common reverse shell patterns in command execution
+tags:
+  - attack.execution
+  - attack.t1059
+  - attack.t1059.004
+logsource:
+  category: linux
+  product: syslog
+detection:
+  selection:
+    - '/bin/bash -i'
+    - 'bash -c'
+    - '/dev/tcp/'
+    - 'nc -e /bin'
+    - 'mkfifo /tmp'
+    - 'python -c "import socket'
+    - 'perl -e "use Socket'
+  condition: selection

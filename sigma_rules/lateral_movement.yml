@@ -1,0 +1,24 @@
+title: Lateral Movement via PsExec
+id: lateral-psexec-01
+status: stable
+level: high
+description: Detects PsExec usage or similar remote execution tools for lateral movement
+tags:
+  - attack.lateral_movement
+  - attack.t1570
+  - attack.execution
+  - attack.t1569.002
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    - 'PsExec'
+    - 'PSEXESVC'
+    - '\\ADMIN$'
+    - '\\IPC$'
+    - 'wmic /node'
+    - 'winrm'
+    - 'Enter-PSSession'
+    - 'Invoke-Command -ComputerName'
+  condition: selection
