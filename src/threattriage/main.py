@@ -71,7 +71,9 @@ def create_app() -> FastAPI:
     from threattriage.api.v1.routes import router as main_router
     from threattriage.api.v1.intel import router as intel_router
     from threattriage.api.v1.ws import router as ws_router
+    from threattriage.api.v1.auth import router as auth_router
 
+    app.include_router(auth_router)
     app.include_router(main_router)
     app.include_router(intel_router)
     app.include_router(ws_router)

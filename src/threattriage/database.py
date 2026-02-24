@@ -54,6 +54,7 @@ async def init_db() -> None:
     """Create all tables (dev/testing only — use Alembic in production)."""
     # Import all models so SQLModel knows about them
     from threattriage.models import alert, incident, log_entry, ioc  # noqa: F401
+    from threattriage.models.user import User  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
