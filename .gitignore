@@ -49,5 +49,6 @@ frontend/dist/
 nohup.out
 reports/*.json
 reports/*.html
+.pids/
 .gemini/
 .agents/
