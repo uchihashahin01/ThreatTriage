@@ -55,6 +55,7 @@ async def init_db() -> None:
     # Import all models so SQLModel knows about them
     from threattriage.models import alert, incident, log_entry, ioc  # noqa: F401
     from threattriage.models.user import User  # noqa: F401
+    from threattriage.models.audit_log import AuditLog  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
