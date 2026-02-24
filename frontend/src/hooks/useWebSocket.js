@@ -20,6 +20,8 @@ export default function useWebSocket(url, options = {}) {
     const reconnectTimer = useRef(null);
     const mountedRef = useRef(true);
 
+    const connectRef = useRef(null);
+
     const connect = useCallback(() => {
         if (!enabled || !mountedRef.current) return;
 
@@ -45,7 +47,7 @@ export default function useWebSocket(url, options = {}) {
                     const data = JSON.parse(event.data);
                     setLastMessage(data);
                     onMessage?.(data);
-                } catch (e) {
+                } catch {
                     // Ignore non-JSON messages
                 }
             };
@@ -57,20 +59,24 @@ export default function useWebSocket(url, options = {}) {
                 clearInterval(ws._pingInterval);
                 // Auto-reconnect
                 reconnectTimer.current = setTimeout(() => {
-                    if (mountedRef.current && enabled) connect();
+                    if (mountedRef.current && enabled) connectRef.current?.();
                 }, reconnectInterval);
             };
 
             ws.onerror = () => {
                 ws.close();
             };
-        } catch (e) {
+        } catch {
             // Connection failed — retry
             reconnectTimer.current = setTimeout(() => {
-                if (mountedRef.current && enabled) connect();
+                if (mountedRef.current && enabled) connectRef.current?.();
             }, reconnectInterval);
         }
     }, [url, enabled, onMessage, onConnect, onDisconnect, reconnectInterval]);
+
+    useEffect(() => {
+        connectRef.current = connect;
+    }, [connect]);
 
     useEffect(() => {
         mountedRef.current = true;

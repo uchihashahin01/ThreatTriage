@@ -175,3 +175,91 @@ export async function healthCheck() {
   const res = await fetch(`${API_BASE}/health`);
   return res.json();
 }
+// ── SOAR ─────────────────────────────────────────────────────────────
+
+export async function fetchPlaybooks() {
+  const res = await fetch(`${API_BASE}/api/v1/soar/playbooks`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function fetchSOARHistory(limit = 50) {
+  const res = await fetch(`${API_BASE}/api/v1/soar/history?limit=${limit}`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function executePlaybook(playbookId, alertData) {
+  const res = await fetch(`${API_BASE}/api/v1/soar/execute`, {
+    method: 'POST', headers: getHeaders(),
+    body: JSON.stringify({ playbook_id: playbookId, alert_data: alertData }),
+  });
+  return handleResponse(res);
+}
+
+// ── GeoIP ────────────────────────────────────────────────────────────
+
+export async function fetchGeoIPData() {
+  const res = await fetch(`${API_BASE}/api/v1/dashboard/geoip`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+// ── ML Anomaly ───────────────────────────────────────────────────────
+
+export async function fetchMLStatus() {
+  const res = await fetch(`${API_BASE}/api/v1/ml/status`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function runMLDetection() {
+  const res = await fetch(`${API_BASE}/api/v1/ml/detect`, {
+    method: 'POST', headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+// ── Admin ────────────────────────────────────────────────────────────
+
+export async function fetchAuditLogs(limit = 100) {
+  const res = await fetch(`${API_BASE}/api/v1/admin/audit-logs?limit=${limit}`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function fetchUsers() {
+  const res = await fetch(`${API_BASE}/api/v1/admin/users`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function updateUserRole(userId, role) {
+  const res = await fetch(`${API_BASE}/api/v1/admin/users/${userId}/role`, {
+    method: 'PATCH', headers: getHeaders(),
+    body: JSON.stringify({ role }),
+  });
+  return handleResponse(res);
+}
+
+// ── Storage ──────────────────────────────────────────────────────────
+
+export async function fetchStorageStats() {
+  const res = await fetch(`${API_BASE}/api/v1/admin/storage/stats`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+export async function rotateStorage(retentionDays = 7) {
+  const res = await fetch(`${API_BASE}/api/v1/admin/storage/rotate?retention_days=${retentionDays}`, {
+    method: 'POST', headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function fetchArchives() {
+  const res = await fetch(`${API_BASE}/api/v1/admin/storage/archives`, { headers: getHeaders() });
+  return handleResponse(res);
+}
+
+// ── PDF Reports ──────────────────────────────────────────────────────
+
+export async function generatePDFReport(incidentId) {
+  const res = await fetch(`${API_BASE}/api/v1/incidents/${incidentId}/pdf`, {
+    method: 'POST', headers: getHeaders(),
+  });
+  return handleResponse(res);
+}
