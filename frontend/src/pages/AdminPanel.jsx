@@ -84,10 +84,6 @@ export default function AdminPanel() {
     { id: 'ml', icon: Activity, label: 'ML Anomaly' },
   ];
 
-  const severityColors = {
-    critical: '#ff0040', high: '#ff6b00', medium: '#ffb800', low: '#00d4ff', info: '#888',
-  };
-
   return (
     <div className="page-container">
       <div className="page-header">
@@ -141,19 +137,19 @@ export default function AdminPanel() {
             <tbody>
               {auditLogs.map((log, i) => (
                 <tr key={i}>
-                  <td style={{ fontFamily: 'monospace', fontSize: '0.8em', whiteSpace: 'nowrap', color: '#8b949e' }}>
+                  <td className="mono" style={{ fontSize: '0.8em', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
                     {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
                   </td>
                   <td>
-                    <span style={{ color: '#00d4ff' }}>{log.username}</span>
+                    <span style={{ color: 'var(--cyber-blue)', fontWeight: 600 }}>{log.username}</span>
                   </td>
                   <td>
                     <span className="tag-pill">{log.action}</span>
                   </td>
-                  <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
+                  <td className="mono" style={{ fontSize: '0.85em' }}>
                     {log.resource_type}{log.resource_id ? `:${log.resource_id.slice(0, 8)}` : ''}
                   </td>
-                  <td style={{ fontSize: '0.8em', color: '#8b949e', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <td style={{ fontSize: '0.8em', color: 'var(--text-secondary)', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {log.details ? JSON.stringify(log.details) : '—'}
                   </td>
                 </tr>
@@ -182,8 +178,8 @@ export default function AdminPanel() {
             <tbody>
               {users.map((u, i) => (
                 <tr key={i}>
-                  <td style={{ color: '#e6edf3', fontWeight: 600 }}>{u.username}</td>
-                  <td style={{ color: '#8b949e' }}>{u.email}</td>
+                  <td style={{ color: 'var(--text-bright)', fontWeight: 700 }}>{u.username}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
                   <td>
                     <select
                       value={u.role}
@@ -201,7 +197,7 @@ export default function AdminPanel() {
                     </span>
                   </td>
                   <td>
-                    <UserCheck size={14} style={{ color: '#00ff41' }} />
+                    <UserCheck size={14} style={{ color: 'var(--cyber-green)' }} />
                   </td>
                 </tr>
               ))}
@@ -214,22 +210,25 @@ export default function AdminPanel() {
       {tab === 'storage' && (
         <div>
           {storageStats && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-              <div className="metric-card">
-                <div className="metric-value">{storageStats.active_log_count?.toLocaleString() || 0}</div>
-                <div className="metric-label">Active Logs</div>
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginBottom: '1.5rem' }}>
+              <div className="stat-card">
+                <div className="stat-icon"><Database size={16} /></div>
+                <div className="stat-value">{storageStats.active_log_count?.toLocaleString() || 0}</div>
+                <div className="stat-label">Active Logs</div>
               </div>
-              <div className="metric-card">
-                <div className="metric-value">{storageStats.archive_count || 0}</div>
-                <div className="metric-label">Archives</div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: 'rgba(0, 212, 255, 0.12)', color: 'var(--cyber-blue)' }}><Archive size={16} /></div>
+                <div className="stat-value">{storageStats.archive_count || 0}</div>
+                <div className="stat-label">Archives</div>
               </div>
-              <div className="metric-card">
-                <div className="metric-value">
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.12)', color: 'var(--cyber-purple)' }}><HardDrive size={16} /></div>
+                <div className="stat-value">
                   {storageStats.total_archive_size_mb
-                    ? `${storageStats.total_archive_size_mb.toFixed(2)} MB`
-                    : '0 MB'}
+                    ? `${storageStats.total_archive_size_mb.toFixed(1)}`
+                    : '0'}
                 </div>
-                <div className="metric-label">Archive Size</div>
+                <div className="stat-label">Archive Size (MB)</div>
               </div>
             </div>
           )}
@@ -249,9 +248,9 @@ export default function AdminPanel() {
                   <tbody>
                     {archives.map((a, i) => (
                       <tr key={i}>
-                        <td style={{ fontFamily: 'monospace', color: '#00ff41', fontSize: '0.85em' }}>{a.filename}</td>
+                        <td className="mono" style={{ color: 'var(--cyber-green)', fontSize: '0.85em' }}>{a.filename}</td>
                         <td>{a.size_mb ? `${a.size_mb.toFixed(2)} MB` : a.size_bytes + ' B'}</td>
-                        <td style={{ color: '#8b949e', fontSize: '0.85em' }}>
+                        <td style={{ color: 'var(--text-secondary)', fontSize: '0.85em' }}>
                           {a.created_at ? new Date(a.created_at).toLocaleString() : '—'}
                         </td>
                       </tr>
@@ -268,20 +267,25 @@ export default function AdminPanel() {
       {tab === 'ml' && (
         <div>
           {mlStatus && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-              <div className="metric-card">
-                <div className="metric-value" style={{ color: mlStatus.trained ? '#00ff41' : '#ff6b00' }}>
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', marginBottom: '1.5rem' }}>
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: mlStatus.trained ? 'rgba(0, 255, 65, 0.12)' : 'rgba(255, 107, 0, 0.12)', color: mlStatus.trained ? 'var(--cyber-green)' : 'var(--high)' }}>
+                  <Activity size={16} />
+                </div>
+                <div className="stat-value" style={{ color: mlStatus.trained ? 'var(--cyber-green)' : 'var(--high)', fontSize: '1.2rem' }}>
                   {mlStatus.trained ? 'TRAINED' : 'UNTRAINED'}
                 </div>
-                <div className="metric-label">Model Status</div>
+                <div className="stat-label">Model Status</div>
               </div>
-              <div className="metric-card">
-                <div className="metric-value">{mlStatus.training_samples || 0}</div>
-                <div className="metric-label">Training Samples</div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: 'rgba(0, 212, 255, 0.12)', color: 'var(--cyber-blue)' }}><Database size={16} /></div>
+                <div className="stat-value">{mlStatus.training_samples || 0}</div>
+                <div className="stat-label">Training Samples</div>
               </div>
-              <div className="metric-card">
-                <div className="metric-value">{(mlStatus.contamination * 100).toFixed(0)}%</div>
-                <div className="metric-label">Contamination</div>
+              <div className="stat-card">
+                <div className="stat-icon" style={{ background: 'rgba(168, 85, 247, 0.12)', color: 'var(--cyber-purple)' }}><Shield size={16} /></div>
+                <div className="stat-value">{(mlStatus.contamination * 100).toFixed(0)}%</div>
+                <div className="stat-label">Contamination</div>
               </div>
             </div>
           )}
@@ -301,26 +305,27 @@ export default function AdminPanel() {
                   <tbody>
                     {(mlResults.anomalies || []).map((a, i) => (
                       <tr key={i}>
-                        <td style={{ fontFamily: 'monospace', color: '#00ff41' }}>{a.source_ip}</td>
+                        <td className="mono" style={{ color: 'var(--cyber-green)' }}>{a.source_ip}</td>
                         <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{
-                              width: '60px', height: '6px', background: '#21262d', borderRadius: '3px', overflow: 'hidden'
+                              width: '60px', height: '6px', background: 'var(--bg-elevated)', borderRadius: '3px', overflow: 'hidden'
                             }}>
                               <div style={{
                                 width: `${a.normalized_score}%`, height: '100%',
-                                background: severityColors[a.severity] || '#888',
+                                background: a.severity === 'critical' ? 'var(--critical)' : a.severity === 'high' ? 'var(--high)' : a.severity === 'medium' ? 'var(--medium)' : 'var(--low)',
+                                boxShadow: `0 0 6px ${a.severity === 'critical' ? 'rgba(255,0,64,0.4)' : 'rgba(0,212,255,0.3)'}`,
                               }} />
                             </div>
-                            <span style={{ fontSize: '0.85em' }}>{a.normalized_score}</span>
+                            <span className="mono" style={{ fontSize: '0.85em' }}>{a.normalized_score}</span>
                           </div>
                         </td>
                         <td>
-                          <span style={{ color: severityColors[a.severity] || '#888', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.8em' }}>
+                          <span className={`severity-badge severity-${a.severity}`}>
                             {a.severity}
                           </span>
                         </td>
-                        <td style={{ fontSize: '0.75em', fontFamily: 'monospace', color: '#8b949e' }}>
+                        <td className="mono" style={{ fontSize: '0.75em', color: 'var(--text-secondary)' }}>
                           {a.features ? Object.entries(a.features).map(([k, v]) => `${k}=${typeof v === 'number' ? v.toFixed(1) : v}`).join(' | ') : '—'}
                         </td>
                       </tr>
