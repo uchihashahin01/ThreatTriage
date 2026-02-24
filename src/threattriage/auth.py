@@ -2,26 +2,34 @@
 
 from __future__ import annotations
 
+import hashlib
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from threattriage.config import get_settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 hours
 
 
+def _pre_hash(password: str) -> str:
+    """Pre-hash passwords that exceed bcrypt's 72-byte limit via SHA-256."""
+    if len(password.encode("utf-8")) > 72:
+        return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    return password
+
+
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    pw = _pre_hash(password).encode("utf-8")
+    return bcrypt.hashpw(pw, bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    pw = _pre_hash(plain).encode("utf-8")
+    return bcrypt.checkpw(pw, hashed.encode("utf-8"))
 
 
 def create_access_token(

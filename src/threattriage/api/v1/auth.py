@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
+from threattriage.api.deps import get_current_user
 from threattriage.auth import (
     create_access_token,
     hash_password,
@@ -118,15 +119,32 @@ async def login(body: LoginRequest) -> TokenResponse:
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: dict = Depends(lambda: None),
+    current_user: dict = Depends(get_current_user),
 ) -> UserResponse:
     """Get current authenticated user info."""
-    from threattriage.api.deps import get_current_user as _get
-    current_user = await _get()
+    from uuid import UUID as _UUID
+
+    user_id = current_user["user_id"]
+
+    # Demo mode returns static info
+    if user_id == "demo":
+        return UserResponse(
+            id="demo",
+            username="demo",
+            email="demo@threattriage.local",
+            full_name="Demo User",
+            role="admin",
+            is_active=True,
+        )
 
     async with async_session_factory() as session:
+        try:
+            uid = _UUID(user_id)
+        except (ValueError, AttributeError):
+            raise HTTPException(400, "Invalid user ID")
+
         result = await session.execute(
-            select(User).where(User.id == current_user["user_id"])
+            select(User).where(User.id == uid)
         )
         user = result.scalar_one_or_none()
 
