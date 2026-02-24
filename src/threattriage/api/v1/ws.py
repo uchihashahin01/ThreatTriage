@@ -77,4 +77,8 @@ async def websocket_alerts(websocket: WebSocket) -> None:
             if data == "ping":
                 await websocket.send_json({"type": "pong"})
     except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
         manager.disconnect(websocket)

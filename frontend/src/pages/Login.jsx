@@ -26,7 +26,14 @@ export default function Login({ onLogin }) {
             if (data.access_token) {
                 onLogin(data.user);
             } else {
-                setError(data.detail || 'Authentication failed');
+                // FastAPI 422 validation errors return detail as array of objects
+                let msg = 'Authentication failed';
+                if (Array.isArray(data.detail)) {
+                    msg = data.detail.map(e => e.msg || e.message || JSON.stringify(e)).join('; ');
+                } else if (typeof data.detail === 'string') {
+                    msg = data.detail;
+                }
+                setError(msg);
             }
         } catch (err) {
             setError('Connection failed — is the server running?');
